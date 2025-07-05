@@ -39,13 +39,20 @@
     button:hover {
       background-color: #45a049;
     }
+    .error {
+      color: red;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
   </style>
 </head>
 <body>
 
   <h2>Book Your Sauna Session 🔥</h2>
 
-  <form action="https://formspree.io/f/mldnknzr" method="POST">
+  <form id="bookingForm" action="https://formspree.io/f/mldnknzr" method="POST" onsubmit="return validateBooking()">
+    <div id="errorMessage" class="error"></div>
+
     <label for="name">Full Name</label>
     <input type="text" id="name" name="name" required>
 
@@ -55,21 +62,49 @@
     <label for="date">Date</label>
     <input type="date" id="date" name="date" required>
 
-    <label for="time">Time</label>
-    <select id="time" name="time" required>
-      <option value="">Select a time slot</option>
-      <option>08:00 - 09:00</option>
-      <option>09:00 - 10:00</option>
-      <option>10:00 - 11:00</option>
-      <option>17:00 - 18:00</option>
-      <option>18:00 - 19:00</option>
-    </select>
+    <label for="start">Start Time</label>
+    <input type="time" id="start" name="start" min="08:00" max="20:00" required>
+
+    <label for="end">End Time</label>
+    <input type="time" id="end" name="end" min="10:00" max="22:00" required>
 
     <label for="notes">Additional Notes (optional)</label>
     <input type="text" id="notes" name="notes">
 
     <button type="submit">Book Now</button>
   </form>
+
+  <script>
+    function validateBooking() {
+      const error = document.getElementById('errorMessage');
+      const start = document.getElementById('start').value;
+      const end = document.getElementById('end').value;
+
+      if (!start || !end) {
+        error.textContent = "Please select both start and end time.";
+        return false;
+      }
+
+      const [sh, sm] = start.split(':').map(Number);
+      const [eh, em] = end.split(':').map(Number);
+      const startMinutes = sh * 60 + sm;
+      const endMinutes = eh * 60 + em;
+      const duration = endMinutes - startMinutes;
+
+      if (startMinutes < 480 || endMinutes > 1320) {
+        error.textContent = "Booking must be between 08:00 and 22:00.";
+        return false;
+      }
+
+      if (duration < 120) {
+        error.textContent = "Booking must be at least 2 hours.";
+        return false;
+      }
+
+      error.textContent = "";
+      return true;
+    }
+  </script>
 
 </body>
 </html>
