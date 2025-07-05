@@ -1,83 +1,137 @@
-<form id="bookingForm" onsubmit="return validateBooking()">
-  <label>
-    Name:
-    <input type="text" name="name" required />
-  </label><br/>
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        background: #f2f2f2;
+      }
 
-  <label>
-    Email:
-    <input type="email" name="email" required />
-  </label><br/>
+      form {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        max-width: 400px;
+        margin: auto;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      }
 
-  <label>
-    Date:
-    <input type="date" name="date" required />
-  </label><br/>
+      label {
+        display: block;
+        margin-top: 10px;
+      }
 
-  <label>
-    Start Time:
-    <input type="time" name="start" required />
-  </label><br/>
+      input, textarea {
+        width: 100%;
+        padding: 8px;
+        margin-top: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
 
-  <label>
-    End Time:
-    <input type="time" name="end" required />
-  </label><br/>
+      button {
+        margin-top: 15px;
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
 
-  <label>
-    Notes:
-    <textarea name="notes"></textarea>
-  </label><br/>
+      button:hover {
+        background-color: #45a049;
+      }
 
-  <button type="submit">Book</button>
+      #errorMessage {
+        color: red;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="bookingForm" onsubmit="return validateBooking()">
+      <label>
+        Name:
+        <input type="text" name="name" required />
+      </label>
 
-  <p id="errorMessage" style="color:red;"></p>
-</form>
+      <label>
+        Email:
+        <input type="email" name="email" required />
+      </label>
 
-<script>
-  async function validateBooking() {
-    const error = document.getElementById('errorMessage');
-    const form = document.getElementById('bookingForm');
+      <label>
+        Date:
+        <input type="date" name="date" required />
+      </label>
 
-    const data = {
-      name: form.name.value,
-      email: form.email.value,
-      date: form.date.value,
-      start: form.start.value,
-      end: form.end.value,
-      notes: form.notes.value
-    };
+      <label>
+        Start Time:
+        <input type="time" name="start" required />
+      </label>
 
-    const startMins = toMinutes(data.start);
-    const endMins = toMinutes(data.end);
+      <label>
+        End Time:
+        <input type="time" name="end" required />
+      </label>
 
-    if (!data.start || !data.end || endMins - startMins < 120) {
-      error.textContent = "Please select a valid 2-hour block.";
-      return false;
-    }
+      <label>
+        Notes:
+        <textarea name="notes"></textarea>
+      </label>
 
-    const response = await fetch("YOUR_GOOGLE_SCRIPT_URL", {
-      method: "POST",
-      body: JSON.stringify(data),
-      headers: { "Content-Type": "application/json" }
-    });
+      <button type="submit">Book</button>
+      <p id="errorMessage"></p>
+    </form>
 
-    const result = await response.json();
+    <script>
+      function toMinutes(t) {
+        const [h, m] = t.split(':').map(Number);
+        return h * 60 + m;
+      }
 
-    if (!result.success) {
-      error.textContent = result.message;
-    } else {
-      alert("Booking successful!");
-      form.reset();
-      error.textContent = "";
-    }
+      function validateBooking() {
+        const error = document.getElementById('errorMessage');
+        const form = document.getElementById('bookingForm');
 
-    return false;
-  }
+        const data = {
+          name: form.name.value.trim(),
+          email: form.email.value.trim(),
+          date: form.date.value,
+          start: form.start.value,
+          end: form.end.value,
+          notes: form.notes.value.trim()
+        };
 
-  function toMinutes(t) {
-    const [h, m] = t.split(':').map(Number);
-    return h * 60 + m;
-  }
-</script>
+        const startMins = toMinutes(data.start);
+        const endMins = toMinutes(data.end);
 
+        if (!data.start || !data.end || endMins - startMins < 120) {
+          error.textContent = "Please select a valid 2-hour block.";
+          return false;
+        }
+
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (!result.success) {
+              error.textContent = result.message;
+            } else {
+              alert("Booking successful!");
+              form.reset();
+              error.textContent = "";
+            }
+          })
+          .withFailureHandler(function(err) {
+            error.textContent = "An error occurred. Please try again.";
+            console.error(err);
+          })
+          .submitBooking(data);
+
+        return false;
+      }
+    </script>
+  </body>
+</html>
