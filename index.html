@@ -1,110 +1,83 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Sauna Booking</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 2rem;
-      background: #f2f2f2;
+<form id="bookingForm" onsubmit="return validateBooking()">
+  <label>
+    Name:
+    <input type="text" name="name" required />
+  </label><br/>
+
+  <label>
+    Email:
+    <input type="email" name="email" required />
+  </label><br/>
+
+  <label>
+    Date:
+    <input type="date" name="date" required />
+  </label><br/>
+
+  <label>
+    Start Time:
+    <input type="time" name="start" required />
+  </label><br/>
+
+  <label>
+    End Time:
+    <input type="time" name="end" required />
+  </label><br/>
+
+  <label>
+    Notes:
+    <textarea name="notes"></textarea>
+  </label><br/>
+
+  <button type="submit">Book</button>
+
+  <p id="errorMessage" style="color:red;"></p>
+</form>
+
+<script>
+  async function validateBooking() {
+    const error = document.getElementById('errorMessage');
+    const form = document.getElementById('bookingForm');
+
+    const data = {
+      name: form.name.value,
+      email: form.email.value,
+      date: form.date.value,
+      start: form.start.value,
+      end: form.end.value,
+      notes: form.notes.value
+    };
+
+    const startMins = toMinutes(data.start);
+    const endMins = toMinutes(data.end);
+
+    if (!data.start || !data.end || endMins - startMins < 120) {
+      error.textContent = "Please select a valid 2-hour block.";
+      return false;
     }
-    h2 {
-      text-align: center;
-      color: #333;
-    }
-    form {
-      max-width: 500px;
-      margin: auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    }
-    input, select, button {
-      width: 100%;
-      padding: 0.75rem;
-      margin: 0.5rem 0 1rem;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-    button {
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #45a049;
-    }
-    .error {
-      color: red;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-  </style>
-</head>
-<body>
 
-  <h2>Book Your Sauna Session 🔥</h2>
+    const response = await fetch("YOUR_GOOGLE_SCRIPT_URL", {
+      method: "POST",
+      body: JSON.stringify(data),
+      headers: { "Content-Type": "application/json" }
+    });
 
-  <form id="bookingForm" action="https://formspree.io/f/mldnknzr" method="POST" onsubmit="return validateBooking()">
-    <div id="errorMessage" class="error"></div>
+    const result = await response.json();
 
-    <label for="name">Full Name</label>
-    <input type="text" id="name" name="name" required>
-
-    <label for="email">Email Address</label>
-    <input type="email" id="email" name="_replyto" required>
-
-    <label for="date">Date</label>
-    <input type="date" id="date" name="date" required>
-
-    <label for="start">Start Time</label>
-    <input type="time" id="start" name="start" min="08:00" max="20:00" required>
-
-    <label for="end">End Time</label>
-    <input type="time" id="end" name="end" min="10:00" max="22:00" required>
-
-    <label for="notes">Additional Notes (optional)</label>
-    <input type="text" id="notes" name="notes">
-
-    <button type="submit">Book Now</button>
-  </form>
-
-  <script>
-    function validateBooking() {
-      const error = document.getElementById('errorMessage');
-      const start = document.getElementById('start').value;
-      const end = document.getElementById('end').value;
-
-      if (!start || !end) {
-        error.textContent = "Please select both start and end time.";
-        return false;
-      }
-
-      const [sh, sm] = start.split(':').map(Number);
-      const [eh, em] = end.split(':').map(Number);
-      const startMinutes = sh * 60 + sm;
-      const endMinutes = eh * 60 + em;
-      const duration = endMinutes - startMinutes;
-
-      if (startMinutes < 480 || endMinutes > 1320) {
-        error.textContent = "Booking must be between 08:00 and 22:00.";
-        return false;
-      }
-
-      if (duration < 120) {
-        error.textContent = "Booking must be at least 2 hours.";
-        return false;
-      }
-
+    if (!result.success) {
+      error.textContent = result.message;
+    } else {
+      alert("Booking successful!");
+      form.reset();
       error.textContent = "";
-      return true;
     }
-  </script>
 
-</body>
-</html>
+    return false;
+  }
+
+  function toMinutes(t) {
+    const [h, m] = t.split(':').map(Number);
+    return h * 60 + m;
+  }
+</script>
+
